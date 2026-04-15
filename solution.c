@@ -21,14 +21,19 @@ void showAlphabetical(struct seat s[]);
 void assignSeat(struct seat s[]);
 void deleteSeat(struct seat s[]);
 
+// NEW (file functions)
+void saveToFile(struct seat s[], char filename[]);
+void loadFromFile(struct seat s[], char filename[]);
+
 int main() {
     struct seat outbound[SEATS];
     struct seat inbound[SEATS];
 
     char choice1, choice2;
 
-    initSeats(outbound);
-    initSeats(inbound);
+    // LOAD DATA (instead of init)
+    loadFromFile(outbound, "outbound.dat");
+    loadFromFile(inbound, "inbound.dat");
 
     while (1) {
         showMainMenu();
@@ -36,6 +41,9 @@ int main() {
         scanf(" %c", &choice1);
 
         if (choice1 == 'c') {
+            // SAVE BEFORE EXIT
+            saveToFile(outbound, "outbound.dat");
+            saveToFile(inbound, "inbound.dat");
             printf("Goodbye!\n");
             break;
         }
@@ -117,20 +125,16 @@ void showEmptyList(struct seat s[]) {
     printf("\n");
 }
 
-// alphabetical list
 void showAlphabetical(struct seat s[]) {
     struct seat temp[SEATS];
     int count = 0;
 
-    // copy assigned seats
     for (int i = 0; i < SEATS; i++) {
         if (s[i].assigned == 1) {
-            temp[count] = s[i];
-            count++;
+            temp[count++] = s[i];
         }
     }
 
-    // bubble sort by last name
     for (int i = 0; i < count - 1; i++) {
         for (int j = 0; j < count - i - 1; j++) {
             if (strcmp(temp[j].last, temp[j+1].last) > 0) {
@@ -177,7 +181,7 @@ void assignSeat(struct seat s[]) {
 void deleteSeat(struct seat s[]) {
     int num;
 
-    printf("Enter seat number from (1-48) or 0 to cancel: ");
+    printf("Enter seat number (1-48) or 0 to cancel: ");
     scanf("%d", &num);
 
     if (num == 0) return;
@@ -189,4 +193,30 @@ void deleteSeat(struct seat s[]) {
 
     s[num-1].assigned = 0;
     printf("Seat cleared.\n");
+}
+
+// -------- FILE FUNCTIONS --------
+
+void saveToFile(struct seat s[], char filename[]) {
+    FILE *fp = fopen(filename, "wb");
+
+    if (fp == NULL) {
+        printf("Error saving file.\n");
+        return;
+    }
+
+    fwrite(s, sizeof(struct seat), SEATS, fp);
+    fclose(fp);
+}
+
+void loadFromFile(struct seat s[], char filename[]) {
+    FILE *fp = fopen(filename, "rb");
+
+    if (fp == NULL) {
+        initSeats(s);
+        return;
+    }
+
+    fread(s, sizeof(struct seat), SEATS, fp);
+    fclose(fp);
 }
